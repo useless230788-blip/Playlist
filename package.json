@@ -1,6 +1,0 @@
-{
-  "name": "stbplive-m3u-generator",
-  "version": "1.0.0",
-  "description": "Generates M3U playlist from STBPLive JSON API",
-  "private": true
-}
