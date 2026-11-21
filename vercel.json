@@ -1,14 +1,6 @@
 {
   "rewrites": [
-    { "source": "/",              "destination": "/api?path=" },
-    { "source": "/api",           "destination": "/api?path=" },
-    { "source": "/api/(.*)",      "destination": "/api?path=$1" },
-    { "source": "/channels",      "destination": "/api?path=channels" },
-    { "source": "/channel/:id",   "destination": "/api?path=channel/:id" },
-    { "source": "/groups",        "destination": "/api?path=groups" },
-    { "source": "/group/:name",   "destination": "/api?path=group/:name" },
-    { "source": "/search",        "destination": "/api?path=search" },
-    { "source": "/playlist.m3u",  "destination": "/api?path=playlist.m3u" },
-    { "source": "/health",        "destination": "/api?path=health" }
+    { "source": "/playlist.m3u", "destination": "/api/playlist" },
+    { "source": "/playlist",     "destination": "/api/playlist" }
   ]
 }
