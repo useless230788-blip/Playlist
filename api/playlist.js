@@ -1,4 +1,4 @@
-const SOURCE   = process.env.SOURCE   || 'https://jiostb.lovable.app/api/playlist?view=raw';
+const SOURCE   = process.env.SOURCE   || 'https://jiobkl.ytzinadabaad.workers.dev/';
 const CACHE_MS = Number(process.env.CACHE_MS || 30) * 1000;
 
 let cache = { at: 0, body: '' };
@@ -68,7 +68,7 @@ export default async function handler(req, res) {
 
     const text = (await upstream.text()).trim();
 
-    // ── Case 1: upstream is already an M3U playlist → pass through
+    // ── Upstream already an M3U → pass through
     if (text.startsWith('#EXTM3U')) {
       cache = { at: Date.now(), body: text };
       res.setHeader('Content-Type', 'audio/x-mpegurl; charset=utf-8');
@@ -76,13 +76,13 @@ export default async function handler(req, res) {
       return res.status(200).send(text);
     }
 
-    // ── Case 2: upstream is JSON → convert
+    // ── Upstream JSON → convert
     let data;
     try {
       data = JSON.parse(text);
     } catch {
       throw new Error(
-        `Upstream returned neither JSON nor M3U. First 100 chars: ${text.slice(0, 100)}`
+        `Upstream returned neither JSON nor M3U. First 120 chars: ${text.slice(0, 120)}`
       );
     }
 
