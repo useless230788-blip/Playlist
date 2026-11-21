@@ -5,7 +5,6 @@ let cache = { at: 0, body: '' };
 
 function buildM3U(channels) {
   const out = ['#EXTM3U'];
-
   for (const ch of channels) {
     const url = ch.mpd_url || ch.url || ch.stream_url;
     if (!url) continue;
@@ -49,7 +48,6 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  // Serve from memory cache (per cold-start)
   if (Date.now() - cache.at < CACHE_MS && cache.body) {
     res.setHeader('Content-Type', 'audio/x-mpegurl; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=30');
@@ -58,15 +56,40 @@ export default async function handler(req, res) {
 
   try {
     const upstream = await fetch(SOURCE, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Vercel STB API)' },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Vercel STB API)',
+        'Accept': 'application/json, application/x-mpegurl, text/plain, */*',
+      },
       cache: 'no-store',
+      redirect: 'follow',
+      signal: AbortSignal.timeout(8000),
     });
     if (!upstream.ok) throw new Error(`upstream ${upstream.status}`);
 
-    const data = await upstream.json();
+    const text = (await upstream.text()).trim();
+
+    // ── Case 1: upstream is already an M3U playlist → pass through
+    if (text.startsWith('#EXTM3U')) {
+      cache = { at: Date.now(), body: text };
+      res.setHeader('Content-Type', 'audio/x-mpegurl; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=30');
+      return res.status(200).send(text);
+    }
+
+    // ── Case 2: upstream is JSON → convert
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(
+        `Upstream returned neither JSON nor M3U. First 100 chars: ${text.slice(0, 100)}`
+      );
+    }
+
     const channels = Array.isArray(data)
       ? data
       : (data.channels || data.data || data.items || []);
+    if (!channels.length) throw new Error('Upstream JSON had no channels array');
 
     const body = buildM3U(channels);
     cache = { at: Date.now(), body };
